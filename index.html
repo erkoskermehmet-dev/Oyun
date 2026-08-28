@@ -17,26 +17,33 @@
             min-height: 100vh;
             touch-action: manipulation;
             user-select: none;
+            overflow: hidden;
         }
+
         h1 {
-            margin: 0 0 10px 0;
-            font-size: 24px;
+            margin: 10px 0;
+            font-size: 20px;
             letter-spacing: 1px;
         }
+
         .main-container {
             display: flex;
             flex-direction: row;
             align-items: flex-start;
             gap: 15px;
+            max-width: 100%;
+            transition: all 0.3s ease;
         }
+
         canvas {
             border: 2px solid #fff;
             background: #004d00;
-            transition: background 0.3s ease;
+            transition: background 0.3s ease, width 0.3s ease, height 0.3s ease;
+            box-sizing: border-box;
         }
+
         .side-panel {
             width: 150px;
-            height: 500px;
             background: #000;
             border: 2px solid #fff;
             padding: 10px;
@@ -45,10 +52,12 @@
             flex-direction: column;
             gap: 10px;
         }
+
         .side-panel label {
             font-size: 14px;
             font-weight: bold;
         }
+
         .side-panel input {
             width: 100%;
             padding: 6px;
@@ -58,6 +67,7 @@
             border: 1px solid #555;
             border-radius: 4px;
         }
+
         .side-panel button {
             padding: 8px;
             background: #ff4444;
@@ -67,41 +77,100 @@
             border-radius: 4px;
             font-weight: bold;
         }
+
         .side-panel button:hover {
             background: #ff6666;
         }
+
         .info {
-            margin-top: 10px;
+            margin: 10px 0;
             text-align: center;
             font-size: 16px;
         }
 
-        /* Başlangıç Pop-up Ekranı */
+        /* --- MOBİL MODU STİLLERİ --- */
+        body.mobile-mode .main-container {
+            flex-direction: column;
+            align-items: center;
+            border: 12px solid #333;
+            border-radius: 30px;
+            padding: 20px 10px;
+            background: #000;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            max-width: 360px;
+        }
+
+        body.mobile-mode canvas {
+            width: 320px;
+            height: 440px;
+            border-radius: 10px;
+        }
+
+        body.mobile-mode .side-panel {
+            width: 320px;
+            flex-direction: row;
+            align-items: center;
+            border-radius: 8px;
+        }
+
+        /* --- POP-UP MODAL EKRANLARI --- */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.9);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 999;
         }
+
         .modal-box {
             background: #222;
             border: 2px solid #00ffff;
-            padding: 20px 30px;
-            border-radius: 10px;
+            padding: 25px 30px;
+            border-radius: 12px;
             max-width: 320px;
             text-align: center;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
         }
+
         .modal-box h2 {
             margin-top: 0;
             color: #00ffff;
         }
+
+        .mode-btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .mode-btn {
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .pc-btn {
+            background: #00ffff;
+            color: #000;
+        }
+        .pc-btn:hover { background: #80ffff; }
+
+        .mobile-btn {
+            background: #ff00ff;
+            color: #fff;
+        }
+        .mobile-btn:hover { background: #ff80ff; }
+
         .modal-section {
             margin: 15px 0;
             text-align: left;
@@ -113,6 +182,7 @@
             color: #ffcc00;
             font-size: 15px;
         }
+
         .start-btn {
             padding: 10px 15px;
             background: #00ffff;
@@ -132,18 +202,31 @@
 </head>
 <body>
 
-    <!-- Bilgilendirme Ekranı -->
-    <div class="modal-overlay" id="startModal">
+    <!-- 1. ADIM: MOD SEÇİM EKRANI -->
+    <div class="modal-overlay" id="deviceModal">
+        <div class="modal-box">
+            <h2>CİHAZ SEÇİN</h2>
+            <p style="font-size: 14px; color: #ccc;">Oyunu nasıl oynamak istersiniz?</p>
+            
+            <div class="mode-btn-container">
+                <button class="mode-btn pc-btn" id="selectPc">💻 PC HALİ</button>
+                <button class="mode-btn mobile-btn" id="selectMobile">📱 MOBİL HALİ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. ADIM: BİLGİLENDİRME EKRANI -->
+    <div class="modal-overlay" id="startModal" style="display: none;">
         <div class="modal-box">
             <h2>KONTROLLER</h2>
             
-            <div class="modal-section">
+            <div class="modal-section" id="pcControls">
                 <h3>💻 Bilgisayar (PC)</h3>
                 • <b>Hareket:</b> A / D veya Sol / Sağ Ok Tuşları<br>
                 • <b>Ateş Etme:</b> Boşluk (Space) veya Ekranı Tıklama
             </div>
 
-            <div class="modal-section">
+            <div class="modal-section" id="mobileControls" style="display: none;">
                 <h3>📱 Mobil</h3>
                 • <b>Hareket:</b> Parmağınızı ekranda basılı tutup kaydırın<br>
                 • <b>Ateş Etme:</b> Ekrana basılı tuttuğunuzda otomatik ateş eder
@@ -175,8 +258,33 @@
     const scoreElement = document.getElementById("score");
     const secretInput = document.getElementById("secretInput");
     const applyBtn = document.getElementById("applyBtn");
+    
+    const deviceModal = document.getElementById("deviceModal");
     const startModal = document.getElementById("startModal");
+    const selectPc = document.getElementById("selectPc");
+    const selectMobile = document.getElementById("selectMobile");
     const startBtn = document.getElementById("startBtn");
+    
+    const pcControls = document.getElementById("pcControls");
+    const mobileControls = document.getElementById("mobileControls");
+
+    let isMobileView = false;
+
+    selectPc.addEventListener("click", () => {
+        deviceModal.style.display = "none";
+        pcControls.style.display = "block";
+        mobileControls.style.display = "none";
+        startModal.style.display = "flex";
+    });
+
+    selectMobile.addEventListener("click", () => {
+        isMobileView = true;
+        document.body.classList.add("mobile-mode");
+        deviceModal.style.display = "none";
+        pcControls.style.display = "none";
+        mobileControls.style.display = "block";
+        startModal.style.display = "flex";
+    });
 
     const player = {
         x: canvas.width / 2 - 15,
@@ -245,7 +353,7 @@
     }
 
     function pauseGame() {
-        if (startModal.style.display === "none") {
+        if (startModal.style.display === "none" && deviceModal.style.display === "none") {
             isPaused = true;
             isShooting = false;
             player.dx = 0;
@@ -253,7 +361,7 @@
     }
 
     function resumeGame() {
-        if (isPaused && startModal.style.display === "none") {
+        if (isPaused && startModal.style.display === "none" && deviceModal.style.display === "none") {
             checkSecretCode();
             isPaused = false;
         }
@@ -347,6 +455,7 @@
 
     window.addEventListener("touchstart", (e) => {
         if (e.target === canvas && !isPaused) {
+            e.preventDefault();
             isShooting = true;
             handleTouchMove(e);
         }
@@ -354,13 +463,17 @@
 
     window.addEventListener("touchend", () => { isShooting = false; });
     window.addEventListener("touchmove", (e) => {
-        if (e.target === canvas && !isPaused) handleTouchMove(e);
+        if (e.target === canvas && !isPaused) {
+            e.preventDefault();
+            handleTouchMove(e);
+        }
     }, { passive: false });
 
     function handleTouchMove(e) {
         if (e.touches.length > 0) {
             const rect = canvas.getBoundingClientRect();
-            const touchX = e.touches[0].clientX - rect.left;
+            const scaleX = canvas.width / rect.width;
+            const touchX = (e.touches[0].clientX - rect.left) * scaleX;
             player.x = touchX - player.width / 2;
         }
     }
@@ -591,7 +704,7 @@
             ctx.fillRect(e.x, e.y, e.width, e.height);
         });
 
-        if (isPaused && startModal.style.display === "none") {
+        if (isPaused && startModal.style.display === "none" && deviceModal.style.display === "none") {
             ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "#ffffff";
