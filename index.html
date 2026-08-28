@@ -202,7 +202,7 @@
 </head>
 <body>
 
-    <!-- 1. ADIM: MOD SEÇİM EKRANI -->
+    <!-- 1. ADIM: İLK ÇIKACAK CİHAZ SEÇİM EKRANI -->
     <div class="modal-overlay" id="deviceModal">
         <div class="modal-box">
             <h2>CİHAZ SEÇİN</h2>
@@ -215,7 +215,7 @@
         </div>
     </div>
 
-    <!-- 2. ADIM: BİLGİLENDİRME EKRANI -->
+    <!-- 2. ADIM: SEÇİMDEN SONRA GELECEK BİLGİLENDİRME EKRANI -->
     <div class="modal-overlay" id="startModal" style="display: none;">
         <div class="modal-box">
             <h2>KONTROLLER</h2>
@@ -270,6 +270,7 @@
 
     let isMobileView = false;
 
+    // Cihaz Seçimi Buton Dinleyicileri
     selectPc.addEventListener("click", () => {
         deviceModal.style.display = "none";
         pcControls.style.display = "block";
