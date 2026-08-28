@@ -53,11 +53,6 @@
             gap: 10px;
         }
 
-        .side-panel label {
-            font-size: 14px;
-            font-weight: bold;
-        }
-
         .side-panel input {
             width: 100%;
             padding: 6px;
@@ -82,27 +77,34 @@
             background: #ff6666;
         }
 
+        /* PC Skor Tablosu */
         .info {
             margin: 10px 0;
             text-align: center;
-            font-size: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #00ffff;
         }
 
         /* --- MOBİL MODU STİLLERİ --- */
+        body.mobile-mode .info {
+            display: none; /* Mobilde dıştaki skoru gizle, kutu içine alındı */
+        }
+
         body.mobile-mode .main-container {
             flex-direction: column;
             align-items: center;
-            border: 12px solid #333;
-            border-radius: 30px;
-            padding: 20px 10px;
+            border: 8px solid #333;
+            border-radius: 20px;
+            padding: 10px;
             background: #000;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
-            max-width: 360px;
+            max-width: 340px;
         }
 
         body.mobile-mode canvas {
             width: 320px;
-            height: 440px;
+            height: 420px;
             border-radius: 10px;
         }
 
@@ -111,6 +113,7 @@
             flex-direction: row;
             align-items: center;
             border-radius: 8px;
+            padding: 5px;
         }
 
         /* --- POP-UP MODAL EKRANLARI --- */
@@ -202,7 +205,7 @@
 </head>
 <body>
 
-    <!-- 1. ADIM: İLK ÇIKACAK CİHAZ SEÇİM EKRANI -->
+    <!-- CİHAZ SEÇİM EKRANI -->
     <div class="modal-overlay" id="deviceModal">
         <div class="modal-box">
             <h2>CİHAZ SEÇİN</h2>
@@ -215,7 +218,7 @@
         </div>
     </div>
 
-    <!-- 2. ADIM: SEÇİMDEN SONRA GELECEK BİLGİLENDİRME EKRANI -->
+    <!-- BİLGİLENDİRME EKRANI -->
     <div class="modal-overlay" id="startModal" style="display: none;">
         <div class="modal-box">
             <h2>KONTROLLER</h2>
@@ -238,18 +241,17 @@
 
     <h1>ÇOK UĞRAŞTIM LA</h1>
 
+    <div class="info" id="pcScoreContainer">
+        <span>Skor: <b id="score">0</b></span>
+    </div>
+
     <div class="main-container">
         <canvas id="gameCanvas" width="400" height="500"></canvas>
 
         <div class="side-panel">
-            <label for="secretInput">Kod Girin:</label>
             <input type="text" id="secretInput" placeholder="Kodu yaz..." autocomplete="off">
             <button id="applyBtn">Uygula</button>
         </div>
-    </div>
-
-    <div class="info">
-        <span>Skor: <b id="score">0</b></span>
     </div>
 
 <script>
@@ -270,7 +272,6 @@
 
     let isMobileView = false;
 
-    // Cihaz Seçimi Buton Dinleyicileri
     selectPc.addEventListener("click", () => {
         deviceModal.style.display = "none";
         pcControls.style.display = "block";
@@ -704,6 +705,17 @@
             ctx.fillStyle = isSecretActive ? currentEnemyColor : (score >= 500 ? "#ff5555" : "#000000");
             ctx.fillRect(e.x, e.y, e.width, e.height);
         });
+
+        // MOBİL MODUNDA SKORU KUTU İÇİNE SAĞ ÜSTE ÇİZ
+        if (isMobileView) {
+            ctx.save();
+            ctx.fillStyle = "#00ffff";
+            ctx.font = "bold 16px sans-serif";
+            ctx.textAlign = "right";
+            const displayScore = isSecretActive ? "???" : score;
+            ctx.fillText("Skor: " + displayScore, canvas.width - 15, 25);
+            ctx.restore();
+        }
 
         if (isPaused && startModal.style.display === "none" && deviceModal.style.display === "none") {
             ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
