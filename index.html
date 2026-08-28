@@ -89,8 +89,8 @@
         }
 
         /* --- MOBİL MODU STİLLERİ --- */
-        body.mobile-mode .info-container {
-            display: none !important; /* Mobilde alt skor alanını tamamen kaldırır */
+        body.mobile-mode .info {
+            display: none !important;
         }
 
         body.mobile-mode .main-container {
@@ -117,7 +117,7 @@
             border-radius: 8px;
         }
 
-        /* --- POP-UP MODAL EKRANLARI --- */
+        /* --- MODAL EKRANLARI --- */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -206,7 +206,6 @@
 </head>
 <body>
 
-    <!-- 1. ADIM: CİHAZ SEÇİM EKRANI -->
     <div class="modal-overlay" id="deviceModal">
         <div class="modal-box">
             <h2>CİHAZ SEÇİN</h2>
@@ -219,7 +218,6 @@
         </div>
     </div>
 
-    <!-- 2. ADIM: BİLGİLENDİRME EKRANI -->
     <div class="modal-overlay" id="startModal" style="display: none;">
         <div class="modal-box">
             <h2>KONTROLLER</h2>
@@ -252,7 +250,7 @@
         </div>
     </div>
 
-    <div class="info info-container">
+    <div class="info">
         <span>Skor: <b id="score">0</b></span>
     </div>
 
@@ -708,14 +706,16 @@
             ctx.fillRect(e.x, e.y, e.width, e.height);
         });
 
-        // MOBİL MODUNDA CANVASE DİREKT SKORU ÇİZİMİ
+        // MOBİL MODDA CANVASE EN ÜST KATMANDA SKOR ÇİZİMİ
         if (isMobileView) {
             ctx.save();
             ctx.fillStyle = "#00ffff";
-            ctx.font = "bold 16px sans-serif";
+            ctx.font = "bold 18px sans-serif";
             ctx.textAlign = "right";
+            ctx.shadowColor = "#000000";
+            ctx.shadowBlur = 4;
             const displayScore = isSecretActive ? "???" : score;
-            ctx.fillText("Skor: " + displayScore, canvas.width - 15, 25);
+            ctx.fillText("Skor: " + displayScore, canvas.width - 12, 28);
             ctx.restore();
         }
 
