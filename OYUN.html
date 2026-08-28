@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ÇOK UĞRAŞTIM LA</title>
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            color: #fff;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            letter-spacing: 1px;
+        }
+        .main-container {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        canvas {
+            border: 2px solid #fff;
+            background: #004d00;
+            transition: background 0.3s ease;
+        }
+        .side-panel {
+            width: 150px;
+            height: 500px;
+            background: #000;
+            border: 2px solid #fff;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .side-panel label {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .side-panel input {
+            width: 100%;
+            padding: 6px;
+            box-sizing: border-box;
+            background: #222;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+        }
+        .side-panel button {
+            padding: 8px;
+            background: #ff4444;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .side-panel button:hover {
+            background: #ff6666;
+        }
+        .info {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        /* Başlangıç Pop-up Ekranı */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+        .modal-box {
+            background: #222;
+            border: 2px solid #00ffff;
+            padding: 20px 30px;
+            border-radius: 10px;
+            max-width: 320px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+        }
+        .modal-box h2 {
+            margin-top: 0;
+            color: #00ffff;
+        }
+        .modal-section {
+            margin: 15px 0;
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .modal-section h3 {
+            margin: 5px 0;
+            color: #ffcc00;
+            font-size: 15px;
+        }
+        .start-btn {
+            padding: 10px 15px;
+            background: #00ffff;
+            color: #000;
+            border: none;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.2s;
+        }
+        .start-btn:hover {
+            background: #80ffff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Bilgilendirme Ekranı -->
+    <div class="modal-overlay" id="startModal">
+        <div class="modal-box">
+            <h2>KONTROLLER</h2>
+            
+            <div class="modal-section">
+                <h3>💻 Bilgisayar (PC)</h3>
+                • <b>Hareket:</b> A / D veya Sol / Sağ Ok Tuşları<br>
+                • <b>Ateş Etme:</b> Boşluk (Space) veya Ekranı Tıklama
+            </div>
+
+            <div class="modal-section">
+                <h3>📱 Mobil</h3>
+                • <b>Hareket:</b> Parmağınızı ekranda basılı tutup kaydırın<br>
+                • <b>Ateş Etme:</b> Ekrana basılı tuttuğunuzda otomatik ateş eder
+            </div>
+
+            <button class="start-btn" id="startBtn">BENİ Bİ SAL AQ OYUNU OYNİYİM</button>
+        </div>
+    </div>
+
+    <h1>ÇOK UĞRAŞTIM LA</h1>
+
+    <div class="main-container">
+        <canvas id="gameCanvas" width="400" height="500"></canvas>
+
+        <div class="side-panel">
+            <label for="secretInput">Kod Girin:</label>
+            <input type="text" id="secretInput" placeholder="Kodu yaz..." autocomplete="off">
+            <button id="applyBtn">Uygula</button>
+        </div>
+    </div>
+
+    <div class="info">
+        <span>Skor: <b id="score">0</b></span>
+    </div>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreElement = document.getElementById("score");
+    const secretInput = document.getElementById("secretInput");
+    const applyBtn = document.getElementById("applyBtn");
+    const startModal = document.getElementById("startModal");
+    const startBtn = document.getElementById("startBtn");
+
+    const player = {
+        x: canvas.width / 2 - 15,
+        y: canvas.height - 30,
+        width: 30,
+        height: 20,
+        speed: 6,
+        dx: 0
+    };
+
+    let bullets = [];
+    let enemyBullets = [];
+    let enemies = [];
+    let score = 0;
+    let gameOver = false;
+    let isPaused = true;
+    
+    let isSecretActive = false;
+    let isBaranActive = false;
+
+    let discoInterval = null;
+    let currentEnemyColor = "#000000";
+    let rainbowHue = 0;
+
+    let textLetters = [];
+
+    let lastShootTime = 0;
+    const shootCooldown = 400;
+    let isShooting = false;
+
+    let spawnInterval = 3000;
+    let enemySpeedY = 1.5;
+    let enemySpeedX = 2;
+    let spawnTimer = null;
+    let enemyShootTimer = null;
+    let enemyCanShoot = false;
+
+    startBtn.addEventListener("click", () => {
+        startModal.style.display = "none";
+        isPaused = false;
+    });
+
+    function setupCustomText(text) {
+        ctx.font = "900 40px sans-serif";
+        const totalWidth = ctx.measureText(text).width;
+        let startX = (canvas.width - totalWidth) / 2;
+        const startY = canvas.height / 2;
+
+        textLetters = [];
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const charWidth = ctx.measureText(char).width;
+            
+            if (char !== " ") {
+                textLetters.push({
+                    char: char,
+                    x: startX,
+                    y: startY - 30,
+                    width: charWidth,
+                    height: 40,
+                    visible: true
+                });
+            }
+            startX += charWidth;
+        }
+    }
+
+    function pauseGame() {
+        if (startModal.style.display === "none") {
+            isPaused = true;
+            isShooting = false;
+            player.dx = 0;
+        }
+    }
+
+    function resumeGame() {
+        if (isPaused && startModal.style.display === "none") {
+            checkSecretCode();
+            isPaused = false;
+        }
+    }
+
+    secretInput.addEventListener("focus", pauseGame);
+    secretInput.addEventListener("pointerdown", pauseGame);
+    secretInput.addEventListener("touchstart", pauseGame);
+
+    secretInput.addEventListener("blur", () => {
+        resumeGame();
+    });
+
+    applyBtn.addEventListener("click", () => {
+        secretInput.blur();
+    });
+
+    secretInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            secretInput.blur();
+        }
+    });
+
+    function checkSecretCode() {
+        const val = secretInput.value.trim();
+        const valLower = val.toLowerCase();
+
+        if (valLower.startsWith("mesaj_kutu_")) {
+            const customMessage = val.substring(11);
+            if (customMessage.length > 0) {
+                isBaranActive = true;
+                setupCustomText(customMessage);
+            }
+        }
+
+        if (valLower.startsWith("skor_add_")) {
+            const amountStr = valLower.replace("skor_add_", "");
+            const amount = parseInt(amountStr, 10);
+            
+            if (!isNaN(amount)) {
+                score += amount;
+                if (!isSecretActive) {
+                    scoreElement.innerText = score;
+                    checkDifficulty();
+                } else {
+                    triggerSecretScoreFlash();
+                }
+            }
+        }
+
+        if (valLower === "gizli" && !isSecretActive) {
+            isSecretActive = true;
+            scoreElement.innerText = "???";
+            
+            const colors = ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff", "#ff8800"];
+            discoInterval = setInterval(() => {
+                if (!isPaused) {
+                    canvas.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    currentEnemyColor = colors[Math.floor(Math.random() * colors.length)];
+                }
+            }, 200);
+        }
+
+        if (valLower === "baran_oe") {
+            isBaranActive = true;
+            setupCustomText("baran oe");
+        }
+
+        secretInput.value = "";
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (document.activeElement === secretInput) return;
+
+        if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") player.dx = -player.speed;
+        if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") player.dx = player.speed;
+        if (e.key === " ") isShooting = true;
+    });
+
+    document.addEventListener("keyup", (e) => {
+        if (document.activeElement === secretInput) return;
+
+        if (["ArrowLeft", "ArrowRight", "a", "d", "A", "D"].includes(e.key)) player.dx = 0;
+        if (e.key === " ") isShooting = false;
+    });
+
+    window.addEventListener("mousedown", (e) => { 
+        if (e.target === canvas && !isPaused) isShooting = true; 
+    });
+    window.addEventListener("mouseup", () => { isShooting = false; });
+
+    window.addEventListener("touchstart", (e) => {
+        if (e.target === canvas && !isPaused) {
+            isShooting = true;
+            handleTouchMove(e);
+        }
+    }, { passive: false });
+
+    window.addEventListener("touchend", () => { isShooting = false; });
+    window.addEventListener("touchmove", (e) => {
+        if (e.target === canvas && !isPaused) handleTouchMove(e);
+    }, { passive: false });
+
+    function handleTouchMove(e) {
+        if (e.touches.length > 0) {
+            const rect = canvas.getBoundingClientRect();
+            const touchX = e.touches[0].clientX - rect.left;
+            player.x = touchX - player.width / 2;
+        }
+    }
+
+    function shoot() {
+        const currentTime = Date.now();
+        if (isShooting && !gameOver && !isPaused && (currentTime - lastShootTime >= shootCooldown)) {
+            bullets.push({ 
+                x: player.x + player.width / 2 - 2, 
+                y: player.y, 
+                width: 4, 
+                height: 10, 
+                speed: 8
+            });
+            lastShootTime = currentTime;
+        }
+    }
+
+    function spawnEnemy() {
+        if (gameOver || isPaused) return;
+        const x = Math.random() * (canvas.width - 60) + 30;
+        enemies.push({ 
+            x: x, 
+            y: 0, 
+            width: 30, 
+            height: 20, 
+            speedY: enemySpeedY, 
+            speedX: enemySpeedX, 
+            direction: Math.random() < 0.5 ? 1 : -1 
+        });
+    }
+
+    function startSpawning() {
+        if (spawnTimer) clearInterval(spawnTimer);
+        spawnTimer = setInterval(spawnEnemy, spawnInterval);
+    }
+
+    function startEnemyShooting() {
+        if (enemyShootTimer) return;
+        enemyShootTimer = setInterval(() => {
+            if (gameOver || isPaused || enemies.length === 0) return;
+            enemies.forEach(enemy => {
+                enemyBullets.push({
+                    x: enemy.x + enemy.width / 2 - 2,
+                    y: enemy.y + enemy.height,
+                    width: 4,
+                    height: 10,
+                    speed: 5
+                });
+            });
+        }, 1000);
+    }
+
+    startSpawning();
+
+    function checkDifficulty() {
+        if (isSecretActive) return;
+
+        if (score >= 500) {
+            canvas.style.background = "#000000";
+            if (!enemyCanShoot) {
+                enemyCanShoot = true;
+                startEnemyShooting();
+            }
+            if (spawnInterval !== 500) {
+                spawnInterval = 500;
+                enemySpeedY = 4;
+                enemySpeedX = 5;
+                startSpawning();
+            }
+        } else if (score >= 300) {
+            canvas.style.background = "#8b0000";
+            if (spawnInterval !== 800) {
+                spawnInterval = 800;
+                enemySpeedY = 3.5;
+                enemySpeedX = 4.5;
+                startSpawning();
+            }
+        } else if (score >= 100) {
+            canvas.style.background = "#8b8000";
+            if (spawnInterval !== 1500) {
+                spawnInterval = 1500;
+                enemySpeedY = 2.5;
+                enemySpeedX = 3;
+                startSpawning();
+            }
+        } else {
+            canvas.style.background = "#004d00";
+        }
+    }
+
+    function triggerSecretScoreFlash() {
+        scoreElement.innerText = score;
+        setTimeout(() => {
+            if (isSecretActive) scoreElement.innerText = "???";
+        }, 100);
+    }
+
+    function update() {
+        if (gameOver || isPaused) return;
+
+        shoot();
+
+        rainbowHue = (rainbowHue + 3) % 360;
+
+        player.x += player.dx;
+        if (player.x < 0) player.x = 0;
+        if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+        bullets.forEach((bullet, bIndex) => {
+            bullet.y -= bullet.speed;
+
+            if (isBaranActive) {
+                textLetters.forEach(letter => {
+                    if (letter.visible &&
+                        bullet.x < letter.x + letter.width &&
+                        bullet.x + bullet.width > letter.x &&
+                        bullet.y < letter.y + letter.height &&
+                        bullet.y + bullet.height > letter.y
+                    ) {
+                        letter.visible = false;
+                        bullets.splice(bIndex, 1);
+                    }
+                });
+            }
+
+            if (bullet.y < 0) bullets.splice(bIndex, 1);
+        });
+
+        enemyBullets.forEach((eBullet, ebIndex) => {
+            eBullet.y += eBullet.speed;
+
+            if (
+                eBullet.x < player.x + player.width &&
+                eBullet.x + eBullet.width > player.x &&
+                eBullet.y < player.y + player.height &&
+                eBullet.y + eBullet.height > player.y
+            ) {
+                gameOver = true;
+                alert("HAHAHA ÖLDÜN! Skorun: " + score);
+                document.location.reload();
+            }
+
+            if (eBullet.y > canvas.height) enemyBullets.splice(ebIndex, 1);
+        });
+
+        enemies.forEach((enemy, eIndex) => {
+            enemy.y += enemy.speedY;
+            enemy.x += enemy.speedX * enemy.direction;
+
+            if (enemy.x <= 0 || enemy.x + enemy.width >= canvas.width) {
+                enemy.direction *= -1;
+            }
+
+            if (
+                enemy.x < player.x + player.width &&
+                enemy.x + enemy.width > player.x &&
+                enemy.y < player.y + player.height &&
+                enemy.y + enemy.height > player.y
+            ) {
+                gameOver = true;
+                alert("HAHAHA ÖLDÜN! Sana çarptı! Skorun: " + score);
+                document.location.reload();
+            }
+
+            if (enemy.y > canvas.height) {
+                enemies.splice(eIndex, 1);
+                score -= 100;
+                if (isSecretActive) {
+                    triggerSecretScoreFlash();
+                } else {
+                    scoreElement.innerText = score;
+                    checkDifficulty();
+                }
+            }
+
+            bullets.forEach((bullet, bIndex) => {
+                if (
+                    bullet.x < enemy.x + enemy.width &&
+                    bullet.x + bullet.width > enemy.x &&
+                    bullet.y < enemy.y + enemy.height &&
+                    bullet.y + bullet.height > enemy.y
+                ) {
+                    enemies.splice(eIndex, 1);
+                    bullets.splice(bIndex, 1);
+                    score += 10;
+                    
+                    if (isSecretActive) {
+                        triggerSecretScoreFlash();
+                    } else {
+                        scoreElement.innerText = score;
+                        checkDifficulty();
+                    }
+                }
+            });
+        });
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (isBaranActive) {
+            ctx.save();
+            ctx.font = "900 40px sans-serif";
+
+            textLetters.forEach(letter => {
+                if (letter.visible) {
+                    ctx.shadowColor = "#00ffff";
+                    ctx.shadowBlur = 10;
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText(letter.char, letter.x, letter.y + 30);
+                }
+            });
+            ctx.restore();
+        }
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+
+        ctx.fillStyle = "#00ffff";
+        bullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
+
+        ctx.fillStyle = "#ff0000";
+        enemyBullets.forEach(eb => ctx.fillRect(eb.x, eb.y, eb.width, eb.height));
+
+        enemies.forEach(e => {
+            ctx.fillStyle = isSecretActive ? currentEnemyColor : (score >= 500 ? "#ff5555" : "#000000");
+            ctx.fillRect(e.x, e.y, e.width, e.height);
+        });
+
+        if (isPaused && startModal.style.display === "none") {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 24px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("DURDURULDU", canvas.width / 2, canvas.height / 2);
+            ctx.textAlign = "left";
+        }
+    }
+
+    function loop() {
+        update();
+        draw();
+        if (!gameOver) requestAnimationFrame(loop);
+    }
+
+    loop();
+</script>
+</body>
+</html>
